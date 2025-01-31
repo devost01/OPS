@@ -3,7 +3,7 @@ from typing import Callable, List, Optional, Tuple
 from clang.cindex import Cursor, CursorKind, SourceRange
 
 import ops
-from store import Application, Entity, Function, Type
+from store import Application, Entity, Function, Type, Program
 from util import Location, Rewriter, Span, safeFind
 
 def extentToSpan(extent: SourceRange) -> Span:
@@ -34,7 +34,24 @@ def extractDependancies(entities: List[Entity], app: Application) -> List[Tuple[
         extracted_entities.insert(0,(entity, rewriter))
 
     return extracted_entities
+   
+def extractIncludes(program: Program, loop: ops.Loop, entities: List[Entity], app: Application):
+    # Find other functions used by the kernel
+    include_files = []
+    for entity in entities:
+        tokens = list(entity.ast.get_tokens())
+        for i in range(len(tokens)):
+            # Find functions
+            if tokens[i].kind.name == "IDENTIFIER" and tokens[i+1].spelling == "(":
+                # Find matching entities to function
+                found_entities = app.findEntities(tokens[i].spelling, program)
+                if tokens[i].spelling != loop.kernel and len(found_entities) != 0:
+                    # Add to include files (used [0] because all instances of the same function will use same file anyway)
+                    include_file = found_entities[0].program.path.stem
+                    if include_file not in include_files:
+                        include_files.append(include_file)
 
+    return include_files
 
 def updateFunctionTypes(entities: List[Tuple[Entity, Rewriter]], replacement: Callable[[str, Entity], str]) -> None:
     for entity, rewriter in filter(lambda a: isinstance(e[0], function), entities):

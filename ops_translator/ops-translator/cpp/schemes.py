@@ -6,6 +6,7 @@ from language import Lang
 from scheme import Scheme
 from store import Application, ParseError, Program
 from target import Target
+from typing import Tuple, List
 
 class CppMPIOpenMP(Scheme):
     lang = Lang.find("cpp")
@@ -24,14 +25,15 @@ class CppMPIOpenMP(Scheme):
         program: Program, 
         app: Application, 
         kernel_idx: int
-    ) -> str:
+    ) -> Tuple[str, List[str]]:
         kernel_entities = app.findEntities(loop.kernel, program)
 
         if len(kernel_entities) == 0:
             raise ParseError(f"Unable to find kernel: {loop.kernel}")
 
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
-        return ctk.writeSource(extracted_entities)
+        includes = ctk.extractIncludes(program, loop, [i[0] for i in extracted_entities], app)
+        return ctk.writeSource(extracted_entities), includes
 
 Scheme.register(CppMPIOpenMP)
 
@@ -53,14 +55,15 @@ class CppCuda(Scheme):
         program: Program,
         app: Application,
         kernel_idx: int
-    ) -> str:
+    ) -> Tuple[str, List[str]]:
         kernel_entities = app.findEntities(loop.kernel, program)
 
         if len(kernel_entities) == 0:
             raise ParseError(f"Unable to find kernel: {loop.kernel}")
 
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
-        return ctk.writeSource(extracted_entities)
+        includes = ctk.extractIncludes(program, loop, [i[0] for i in extracted_entities], app)
+        return ctk.writeSource(extracted_entities), includes
 
 Scheme.register(CppCuda)
 
@@ -82,14 +85,15 @@ class CppHip(Scheme):
         program: Program,
         app: Application,
         kernel_idx: int
-    ) -> str:
+    ) -> Tuple[str, List[str]]:
         kernel_entities = app.findEntities(loop.kernel, program)
 
         if len(kernel_entities) == 0:
             raise ParseError(f"Unable to find kernel: {loop.kernel}")
 
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
-        return ctk.writeSource(extracted_entities)
+        includes = ctk.extractIncludes(program, loop, [i[0] for i in extracted_entities], app)
+        return ctk.writeSource(extracted_entities), includes
 
 Scheme.register(CppHip)
 
@@ -111,14 +115,15 @@ class CppOpenMPOffload(Scheme):
         program: Program,
         app: Application,
         kernel_idx: int
-    ) -> str:
+    ) -> Tuple[str, List[str]]:
         kernel_entities = app.findEntities(loop.kernel, program)
 
         if len(kernel_entities) == 0:
             raise ParseError(f"Unable to find kernel: {loop.kernel}")
 
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
-        return ctk.writeSource(extracted_entities)
+        includes = ctk.extractIncludes(program, loop, [i[0] for i in extracted_entities], app)
+        return ctk.writeSource(extracted_entities), includes
 
 Scheme.register(CppOpenMPOffload)
 
@@ -140,14 +145,15 @@ Scheme.register(CppOpenMPOffload)
 #        program: Program,
 #        app: Application,
 #        kernel_idx: int
-#    ) -> str:
+#    ) -> Tuple[str, List[str]]:
 #        kernel_entities = app.findEntities(loop.kernel, program)
 #
 #        if len(kernel_entities) == 0:
 #            raise ParseError(f"Unable to find kernel: {loop.kernel}")
 #
 #        extracted_entities = ctk.extractDependancies(kernel_entities, app)
-#        return ctk.writeSource(extracted_entities)
+#        includes = ctk.extractIncludes(program, loop, [i[0] for i in extracted_entities], app)
+#        return ctk.writeSource(extracted_entities), includes
 
 #Scheme.register(CppOpenACC)
 
@@ -169,13 +175,14 @@ class CppSycl(Scheme):
         program: Program,
         app: Application,
         kernel_idx: int
-    ) -> str:
+    ) -> Tuple[str, List[str]]:
         kernel_entities = app.findEntities(loop.kernel, program)
 
         if len(kernel_entities) == 0:
             raise ParseError(f"Unable to find kernel: {loop.kernel}")
 
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
-        return ctk.writeSource(extracted_entities)
+        includes = ctk.extractIncludes(program, loop, [i[0] for i in extracted_entities], app)
+        return ctk.writeSource(extracted_entities), includes
 
 Scheme.register(CppSycl)

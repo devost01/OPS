@@ -1,3 +1,6 @@
+{% for include in kernel_includes %}
+#include "{{include}}.h"
+{% endfor %}
 
 {% block prologue %}
 {% endblock %}

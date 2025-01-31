@@ -40,7 +40,7 @@ class Scheme(Findable):
         template = env.get_template(str(self.loop_host_template))
         #extention = self.loop_host_template.suffixes[-2][1:]
 
-        kernel_func = self.translateKernel(loop, program, app, kernel_idx)
+        kernel_func, kernel_includes = self.translateKernel(loop, program, app, kernel_idx)
 
         kp_obj = KernelProcess()
         if(self.lang.name == "C++"):
@@ -80,6 +80,7 @@ class Scheme(Findable):
                 kernel_func=kernel_func,
                 kernel_idx=kernel_idx,
                 kernel_body=kernel_body,
+                kernel_includes=kernel_includes,
                 consts_in_kernel=consts_in_kernel,
                 const_dims=const_dims,
                 args_list=args_list,
