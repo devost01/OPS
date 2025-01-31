@@ -74,6 +74,42 @@ class Cpp(Lang):
             source_io.seek(0)
             source = source_io.read()
 
+        # Expand defines in parallel loops
+        elif len(defines) - (1 if 'OPS_ACC_IGNORE' in defines else 0) > 0:
+            preprocessor = Preprocessor() 
+
+            for define in defines:
+                if "=" not in define:
+                    define = f"{define}=1"
+
+                preprocessor.define(define.replace("=", " ", 1))
+
+            # Search for tokens containing "ops_par_loop"
+            tokens = preprocessor.tokenize(source)
+            ops_par_loop_indices = []
+            tokens_to_remove = []
+            for i, token in enumerate(tokens):
+                if 'ops_par_loop' in token.value:
+                    ops_par_loop_indices.append(i)
+            # Expand macros in ops_par_loop
+            for i in ops_par_loop_indices:
+                loop_arg_count, loop_args, positions = preprocessor.collect_args(tokens[i+1:-1])
+                # collect_args removes tabs, commas, and newlines, so instead directly retrieve tokens from provided ending token index
+                loop_args = tokens[i : i+positions[-1]+1]
+                loop_args = preprocessor.expand_macros(loop_args)
+                
+                # Replace original token with new token
+                for j in range(len(loop_args)):
+                    tokens[i+j] = loop_args[j]
+
+            # Output tokens as text to stdout
+            source_io = StringIO()
+            for token in tokens:
+                source_io.write(token.value)
+
+            source_io.seek(0)
+            source = source_io.read()
+
         translation_unit = clang.cindex.Index.create().parse(
             path,
             unsaved_files=[(path, source)],
